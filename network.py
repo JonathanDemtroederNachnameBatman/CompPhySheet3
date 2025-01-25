@@ -134,6 +134,51 @@ class Network:
         return inputs, targets
 
 
+    def remove_last_hidden_layer(self):
+        m = len(self.Weights)
+        if m >= 2:
+
+            if m >= 3:
+                to_be_removed = self.Weights[m-2]
+                to_be_reconnected = self.Weights[m-3]
+
+                # Check if number of neurons is equal
+                if np.shape(to_be_reconnected)[0] == np.shape(to_be_removed)[0]:
+                    # layer can be removed safely
+
+                    self.Weights.pop(m-2)
+                    self.Biases.pop(m-2)
+                    self.layer_sizes.pop(m-2)
+                    self.num_layers -= 1
+                    print('layer removed')
+
+                if np.shape(to_be_removed)[0] > np.shape(to_be_reconnected)[0]:
+                    # drop additional weights first
+
+                    neurons_to_be_removed = np.shape(to_be_removed)[0] - np.shape(to_be_reconnected)[0]
+                    for i in range(neurons_to_be_removed):
+                        np.delete(self.Weights[m - 1], np.shape(self.Weights[m - 1])[0] - 1)
+                        np.delete(self.Biases[m - 1], np.shape(self.Biases[m - 1])[0] - 1)
+
+                    self.Weights.pop(m-2)
+                    self.Biases.pop(m-2)
+                    self.layer_sizes.pop(m-2)
+                    self.num_layers -= 1
+                    print('layer removed')
+
+                elif np.shape(to_be_removed)[0] < np.shape(to_be_reconnected)[0]:
+                    # missing information
+
+                    raise Exception("Unequal shapes: Cant remove layer")
+
+            else:
+                self.Weights.pop(m - 2)
+                self.Biases.pop(m - 2)
+                self.layer_sizes.pop(m - 2)
+                self.num_layers -= 1
+                print('layer removed')
+
+
     def train_network(self, batches):
         costs = []
         for k in range(batches):
