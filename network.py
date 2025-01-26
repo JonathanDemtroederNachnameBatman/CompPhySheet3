@@ -179,13 +179,14 @@ class Network:
                 print('layer removed')
 
 
-    def train_network(self, batches):
+    def train_network(self, batches, plot=True):
         costs = []
         for k in range(batches):
             x, y_target = self.make_batch()
             y_out_result, cost = self.train_batch(x, y_target, self.eta)
             costs.append(cost)
-
-        plt.plot(costs)
-        plt.title("Cost function during training")
-        plt.show()
+        if plot:
+            plt.plot(costs)
+            plt.title("Cost function during training")
+            plt.show()
+        return costs
