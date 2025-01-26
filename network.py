@@ -1,6 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+def uniform_weights(size, low=-0.1, high=0.1):
+    return np.random.uniform(low=low, high=high, size=size)
+
+def gaus_weights(size, low=-0.1, high=0.1):
+    return np.random.normal(loc=0, scale=high/np.sqrt(2*np.pi), size=size) + low
+
 class Network:
 
     def __init__(self,
@@ -9,7 +15,8 @@ class Network:
                  cost_function_id,
                  batch_size,
                  eta,
-                 target_function):
+                 target_function,
+                 weight_func=uniform_weights):
 
         self.layer_sizes = layer_sizes
         self.activation_function = activation_function_id
@@ -23,9 +30,7 @@ class Network:
 
         # Weights is a list of weight matrices (one per transition between layers)
         # Single weights are picked from a uniform distribution
-        self.Weights = [np.random.uniform(low=-0.1, high=+0.1,
-                                          size=[self.layer_sizes[j],
-                                                self.layer_sizes[j + 1]]) for j in range(self.num_layers)]
+        self.Weights = [weight_func([self.layer_sizes[j], self.layer_sizes[j + 1]]) for j in range(self.num_layers)]
 
         # Biases is a list of bias vectors (one per layer)
         # Single biases are initialized by value 0
