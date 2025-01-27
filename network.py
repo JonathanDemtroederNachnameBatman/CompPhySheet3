@@ -39,7 +39,7 @@ class Network:
 
     def cost_function(self, y_target, y_out_result):
 
-        if self.cost_function_id == 'chi_square':
+        if self.cost_function_id == 'square':
             return ((y_target - y_out_result) ** 2).sum() / self.batch_size
 
         elif self.cost_function_id == 'cross_entropy':
