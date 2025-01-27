@@ -1,6 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+def uniform_weights(size, low=-0.1, high=0.1):
+    return np.random.uniform(low=low, high=high, size=size)
+
+def gaus_weights(size, low=-0.1, high=0.1):
+    return np.random.normal(loc=0, scale=high/np.sqrt(2*np.pi), size=size) + low
+
 class Network:
 
     def __init__(self,
@@ -9,7 +15,8 @@ class Network:
                  cost_function_id,
                  batch_size,
                  eta,
-                 target_function):
+                 target_function,
+                 weight_func=uniform_weights):
 
         self.layer_sizes = layer_sizes
         self.activation_function = activation_function_id
@@ -23,9 +30,7 @@ class Network:
 
         # Weights is a list of weight matrices (one per transition between layers)
         # Single weights are picked from a uniform distribution
-        self.Weights = [np.random.uniform(low=-0.1, high=+0.1,
-                                          size=[self.layer_sizes[j],
-                                                self.layer_sizes[j + 1]]) for j in range(self.num_layers)]
+        self.Weights = [weight_func([self.layer_sizes[j], self.layer_sizes[j + 1]]) for j in range(self.num_layers)]
 
         # Biases is a list of bias vectors (one per layer)
         # Single biases are initialized by value 0
@@ -134,13 +139,59 @@ class Network:
         return inputs, targets
 
 
-    def train_network(self, batches):
+    def remove_last_hidden_layer(self):
+        m = len(self.Weights)
+        if m >= 2:
+
+            if m >= 3:
+                to_be_removed = self.Weights[m-2]
+                to_be_reconnected = self.Weights[m-3]
+
+                # Check if number of neurons is equal
+                if np.shape(to_be_reconnected)[0] == np.shape(to_be_removed)[0]:
+                    # layer can be removed safely
+
+                    self.Weights.pop(m-2)
+                    self.Biases.pop(m-2)
+                    self.layer_sizes.pop(m-2)
+                    self.num_layers -= 1
+                    print('layer removed')
+
+                if np.shape(to_be_removed)[0] > np.shape(to_be_reconnected)[0]:
+                    # drop additional weights first
+
+                    neurons_to_be_removed = np.shape(to_be_removed)[0] - np.shape(to_be_reconnected)[0]
+                    for i in range(neurons_to_be_removed):
+                        np.delete(self.Weights[m - 1], np.shape(self.Weights[m - 1])[0] - 1)
+                        np.delete(self.Biases[m - 1], np.shape(self.Biases[m - 1])[0] - 1)
+
+                    self.Weights.pop(m-2)
+                    self.Biases.pop(m-2)
+                    self.layer_sizes.pop(m-2)
+                    self.num_layers -= 1
+                    print('layer removed')
+
+                elif np.shape(to_be_removed)[0] < np.shape(to_be_reconnected)[0]:
+                    # missing information
+
+                    raise Exception("Unequal shapes: Cant remove layer")
+
+            else:
+                self.Weights.pop(m - 2)
+                self.Biases.pop(m - 2)
+                self.layer_sizes.pop(m - 2)
+                self.num_layers -= 1
+                print('layer removed')
+
+
+    def train_network(self, batches, plot=True):
         costs = []
         for k in range(batches):
             x, y_target = self.make_batch()
             y_out_result, cost = self.train_batch(x, y_target, self.eta)
             costs.append(cost)
-
-        plt.plot(costs)
-        plt.title("Cost function during training")
-        plt.show()
+        if plot:
+            plt.plot(costs)
+            plt.title("Cost function during training")
+            plt.show()
+        return costs
